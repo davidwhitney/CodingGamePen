@@ -6,7 +6,7 @@ using NUnit.Framework;
 
 namespace CodeingGamePen
 {
-    [TestFixture]
+    [TestFixture(Explicit = true)]
     public class ChuckNorris
     {
         public FakeConsole Console { get; set; }

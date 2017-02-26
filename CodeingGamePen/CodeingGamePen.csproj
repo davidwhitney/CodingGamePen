@@ -45,9 +45,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ChuckNorris.cs" />
+    <Compile Include="Defibrillators.cs" />
     <Compile Include="MarsLander.cs" />
     <Compile Include="FakeConsole.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TheDescent.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
