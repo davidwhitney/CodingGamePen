@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using CodeingGamePen.Fakes;
 using NUnit.Framework;
 
 namespace CodeingGamePen
@@ -36,7 +37,7 @@ namespace CodeingGamePen
             var smallestDiff = int.MaxValue;
             for (var index = 1; index < ordered.Count; index++)
             {
-                var last = ordered[index--];
+                var last = ordered[index-1];
                 var item = ordered[index];
                 var diff = item - last;
                 smallestDiff = diff < smallestDiff ? diff : smallestDiff;

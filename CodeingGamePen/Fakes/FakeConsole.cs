@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace CodeingGamePen
+namespace CodeingGamePen.Fakes
 {
     public class FakeConsole : ConsoleBufferBase
     {
