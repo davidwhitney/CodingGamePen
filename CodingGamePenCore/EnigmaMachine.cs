@@ -45,96 +45,82 @@ namespace CodingGamePenCore
             Assert.That(Console.Outputs[0], Is.EqualTo("EVERYONEISWELCOMEHERE"));
         }
 
-        [Test]
-        public void ForumExample()
-        {
-            Console.AddInput("DECODE", "4", "BDFHJLCPRTXVZNYEIWGAKMUSQO", "AJDKSIRUXBLHWTMCQGZNPYFVOE", "EKMFLGDQVZNTOWYHXUSPAIBRCJ", "KFDI");
-
-            Simulate();
-
-            Assert.That(Console.Outputs[0], Is.EqualTo("ABCD"));
-        }
-
         public void Simulate()
         {
             var operation = Console.ReadLine();
             var seed = int.Parse(Console.ReadLine());
-            var rotors = new List<string>
-            {
-                Console.ReadLine(),
-                Console.ReadLine(),
-                Console.ReadLine()
-            };
+
+            var enigma = new Enigma(
+                new Enigma.Rotor(Console.ReadLine()),
+                new Enigma.Rotor(Console.ReadLine()),
+                new Enigma.Rotor(Console.ReadLine())
+            );
 
             var message = Console.ReadLine();
 
-            if (operation == "ENCODE")
+            var res = operation == "ENCODE"
+                ? enigma.Encode(message, seed)
+                : enigma.Decode(message, seed);
+
+            Console.WriteLine(res);
+        }
+
+        public class Enigma
+        {
+            private readonly IEnumerable<Rotor> _rotors;
+            public Enigma(params Rotor[] rotors) => _rotors = rotors.ToList();
+
+            public string Encode(string message, int seed)
             {
                 var shifted = CaesarShift(message, seed);
-
-                var sb = new StringBuilder();
-                foreach (var letter in shifted)
-                {
-                    sb.Append(rotors.Aggregate(letter, (currentValue, rotor) => rotor[currentValue - 65]));
-                }
-
-                Console.WriteLine(sb.ToString());
+                return _rotors.Aggregate(shifted, (current, rotations) => rotations.EncodeString(current));
             }
-            else
+
+            public string Decode(string message, int seed)
             {
-                rotors.Reverse();
-                var sb = new StringBuilder();
+                var decryptOrdered = new List<Rotor>(_rotors);
+                decryptOrdered.Reverse();
+
+                var rotated = decryptOrdered.Aggregate(message, (current, rot) => rot.DecodeString(current));
+                return CaesarShift(rotated, seed, true);
+            }
+
+            private static string CaesarShift(string message, int seed, bool backwards = false)
+            {
+                var shiftDirection = backwards ? -1 : 1;
+                var wrapDirection = backwards ? 1 : -1;
+                var withinAlphabetBounds = backwards
+                    ? new Func<int, bool>(next => next < 'A')
+                    : next => next > 'Z';
+
+                var incrementingNumber = 0;
+                var shifted = new StringBuilder();
+
                 foreach (var letter in message)
                 {
-                    var currentValue = letter;
-                    foreach (var rotor in rotors)
+                    var shiftedLetter = letter + (seed + incrementingNumber++) * shiftDirection;
+                    while (withinAlphabetBounds(shiftedLetter))
                     {
-                        var index = rotor.IndexOf(currentValue);
-                        currentValue = (char) ((char)index + 65);
+                        shiftedLetter += 26 * wrapDirection;
                     }
 
-                    sb.Append(currentValue);
+                    shifted.Append((char)shiftedLetter);
                 }
 
-                var preShift = sb.ToString();
-                var shifted = CaesarShift(preShift, seed, true);
-                Console.WriteLine(shifted);
-
+                return shifted.ToString();
             }
-        }
 
-        private static string CaesarShift(string message, int seed, bool inverse = false)
-        {
-            var shifted = new StringBuilder();
-            var incrementingNumber = 0;
-
-            foreach (var letter in message)
+            public class Rotor
             {
-                var shiftFactor = seed + incrementingNumber;
-                shiftFactor = inverse ? shiftFactor * -1 : shiftFactor;
-
-                var next = letter + shiftFactor;
-
-                if (inverse)
-                {
-                    while (next < 'A')
-                    {
-                        next += 26;
-                    }
-                }
-                else
-                {
-                    while (next > 'Z')
-                    {
-                        next -= 26;
-                    }
-                }
-
-                shifted.Append((char)next);
-                incrementingNumber++;
+                private readonly string _key;
+                public Rotor(string key) => _key = key;
+                public string EncodeString(string sequence) => new string(Encode(sequence).ToArray());
+                public IEnumerable<char> Encode(string sequence) => sequence.Select(letter => _key[letter - 65]);
+                public string DecodeString(string sequence) => new string(Decode(sequence).ToArray());
+                public IEnumerable<char> Decode(string sequence) => sequence.Select(letter => (char)(_key.IndexOf(letter) + 65));
             }
-
-            return shifted.ToString();
         }
+
+
     }
 }
