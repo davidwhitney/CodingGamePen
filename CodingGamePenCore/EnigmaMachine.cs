@@ -73,7 +73,7 @@ namespace CodingGamePenCore
             public string Encode(string message, int seed)
             {
                 var shifted = CaesarShift(message, seed);
-                return _rotors.Aggregate(shifted, (current, rotations) => rotations.EncodeString(current));
+                return _rotors.Aggregate(shifted, (current, rotor) => rotor.Encode(current));
             }
 
             public string Decode(string message, int seed)
@@ -81,15 +81,15 @@ namespace CodingGamePenCore
                 var decryptOrdered = new List<Rotor>(_rotors);
                 decryptOrdered.Reverse();
 
-                var rotated = decryptOrdered.Aggregate(message, (current, rot) => rot.DecodeString(current));
+                var rotated = decryptOrdered.Aggregate(message, (current, rotor) => rotor.Decode(current));
                 return CaesarShift(rotated, seed, true);
             }
 
             private static string CaesarShift(string message, int seed, bool backwards = false)
             {
                 var shiftDirection = backwards ? -1 : 1;
-                var wrapDirection = backwards ? 1 : -1;
-                var withinAlphabetBounds = backwards
+                var wrapDirection = shiftDirection * -1;
+                var outsideOfAlphabetBounds = backwards
                     ? new Func<int, bool>(next => next < 'A')
                     : next => next > 'Z';
 
@@ -99,7 +99,7 @@ namespace CodingGamePenCore
                 foreach (var letter in message)
                 {
                     var shiftedLetter = letter + (seed + incrementingNumber++) * shiftDirection;
-                    while (withinAlphabetBounds(shiftedLetter))
+                    while (outsideOfAlphabetBounds(shiftedLetter))
                     {
                         shiftedLetter += 26 * wrapDirection;
                     }
@@ -114,13 +114,9 @@ namespace CodingGamePenCore
             {
                 private readonly string _key;
                 public Rotor(string key) => _key = key;
-                public string EncodeString(string sequence) => new string(Encode(sequence).ToArray());
-                public IEnumerable<char> Encode(string sequence) => sequence.Select(letter => _key[letter - 65]);
-                public string DecodeString(string sequence) => new string(Decode(sequence).ToArray());
-                public IEnumerable<char> Decode(string sequence) => sequence.Select(letter => (char)(_key.IndexOf(letter) + 65));
+                public string Encode(string sequence) => new string(sequence.Select(letter => _key[letter - 65]).ToArray());
+                public string Decode(string sequence) => new string(sequence.Select(letter => (char)(_key.IndexOf(letter) + 65)).ToArray());
             }
         }
-
-
     }
 }
