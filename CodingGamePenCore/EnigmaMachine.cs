@@ -26,7 +26,7 @@ namespace CodingGamePenCore
         }
 
         [Test]
-        public void TestCase23()
+        public void Encode23()
         {
             Console.AddInput("ENCODE", "7", "BDFHJLCPRTXVZNYEIWGAKMUSQO", "AJDKSIRUXBLHWTMCQGZNPYFVOE", "EKMFLGDQVZNTOWYHXUSPAIBRCJ", "WEATHERREPORTWINDYTODAY");
 
@@ -35,49 +35,106 @@ namespace CodingGamePenCore
             Assert.That(Console.Outputs[0], Is.EqualTo("ALWAURKQEQQWLRAWZHUYKVN"));
         }
 
+        [Test]
+        public void Decode21()
+        {
+            Console.AddInput("DECODE", "9", "BDFHJLCPRTXVZNYEIWGAKMUSQO", "AJDKSIRUXBLHWTMCQGZNPYFVOE", "EKMFLGDQVZNTOWYHXUSPAIBRCJ", "PQSACVVTOISXFXCIAMQEM");
+
+            Simulate();
+
+            Assert.That(Console.Outputs[0], Is.EqualTo("EVERYONEISWELCOMEHERE"));
+        }
+
+        [Test]
+        public void ForumExample()
+        {
+            Console.AddInput("DECODE", "4", "BDFHJLCPRTXVZNYEIWGAKMUSQO", "AJDKSIRUXBLHWTMCQGZNPYFVOE", "EKMFLGDQVZNTOWYHXUSPAIBRCJ", "KFDI");
+
+            Simulate();
+
+            Assert.That(Console.Outputs[0], Is.EqualTo("ABCD"));
+        }
+
         public void Simulate()
         {
             var operation = Console.ReadLine();
-            var startOffset = int.Parse(Console.ReadLine());
-            var rotors = new List<string>();
-            for (var i = 0; i < 3; i++)
+            var seed = int.Parse(Console.ReadLine());
+            var rotors = new List<string>
             {
-                rotors.Add(Console.ReadLine());
-            }
+                Console.ReadLine(),
+                Console.ReadLine(),
+                Console.ReadLine()
+            };
 
             var message = Console.ReadLine();
 
             if (operation == "ENCODE")
             {
-                var shifted = "";
-                foreach (var letter in message)
-                {
-                    var next = (char)(letter + startOffset);
-                    while (next > 'Z')
-                    {
-                        next = (char) (next - 26);
-                    }
-                    shifted += next;
-
-
-                    startOffset++;
-                }
+                var shifted = CaesarShift(message, seed);
 
                 var sb = new StringBuilder();
                 foreach (var letter in shifted)
                 {
-                    var current = letter;
-                    foreach (var rotor in rotors)
-                    {
-                        var alphabetOffset = current - 65;
-                        current = rotor[alphabetOffset];
-                    }
-
-                    sb.Append(current);
+                    sb.Append(rotors.Aggregate(letter, (currentValue, rotor) => rotor[currentValue - 65]));
                 }
 
                 Console.WriteLine(sb.ToString());
             }
+            else
+            {
+                rotors.Reverse();
+                var sb = new StringBuilder();
+                foreach (var letter in message)
+                {
+                    var currentValue = letter;
+                    foreach (var rotor in rotors)
+                    {
+                        var index = rotor.IndexOf(currentValue);
+                        currentValue = (char) ((char)index + 65);
+                    }
+
+                    sb.Append(currentValue);
+                }
+
+                var preShift = sb.ToString();
+                var shifted = CaesarShift(preShift, seed, true);
+                Console.WriteLine(shifted);
+
+            }
+        }
+
+        private static string CaesarShift(string message, int seed, bool inverse = false)
+        {
+            var shifted = new StringBuilder();
+            var incrementingNumber = 0;
+
+            foreach (var letter in message)
+            {
+                var shiftFactor = seed + incrementingNumber;
+                shiftFactor = inverse ? shiftFactor * -1 : shiftFactor;
+
+                var next = letter + shiftFactor;
+
+                if (inverse)
+                {
+                    while (next < 'A')
+                    {
+                        next += 26;
+                    }
+                }
+                else
+                {
+                    while (next > 'Z')
+                    {
+                        next -= 26;
+                    }
+                }
+
+                shifted.Append((char)next);
+                incrementingNumber++;
+            }
+
+            return shifted.ToString();
         }
     }
 }
